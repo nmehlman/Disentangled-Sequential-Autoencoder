@@ -22,7 +22,7 @@ def loss_fn(original_seq,recon_seq,f_mean,f_logvar,z_post_mean,z_post_logvar, z_
     are given by the LSTM
     """
     batch_size = original_seq.size(0)
-    mse = F.mse_loss(recon_seq,original_seq,reduction='sum');
+    mse = F.mse_loss(recon_seq,original_seq,reduction='sum')
     kld_f = -0.5 * torch.sum(1 + f_logvar - torch.pow(f_mean,2) - torch.exp(f_logvar))
     z_post_var = torch.exp(z_post_logvar)
     z_prior_var = torch.exp(z_prior_logvar)
@@ -160,14 +160,16 @@ class Trainer(object):
            self.model.train()
        print("Training is complete")
 
-sprite = Sprites('./dataset/lpc-dataset/train', 6767)
-sprite_test = Sprites('./dataset/lpc-dataset/test', 791)
-batch_size = 25
-loader = torch.utils.data.DataLoader(sprite, batch_size=batch_size, shuffle=True, num_workers=4)
-device = torch.device('cuda:1')
-vae = DisentangledVAE(f_dim=256, z_dim=32, step=256, factorised=True,device=device)
-test_f = torch.rand(1,256, device=device)
-test_f = test_f.unsqueeze(1).expand(1, 8, 256)
-trainer = Trainer(vae, sprite, sprite_test, loader ,None, test_f,batch_size=25, epochs=500, learning_rate=0.0002, device=device)
-trainer.load_checkpoint()
-trainer.train_model()
+if __name__ == "__main__":
+
+    sprite = Sprites('./dataset/lpc-dataset/train', 6767)
+    sprite_test = Sprites('./dataset/lpc-dataset/test', 791)
+    batch_size = 25
+    loader = torch.utils.data.DataLoader(sprite, batch_size=batch_size, shuffle=True, num_workers=4)
+    device = torch.device('cuda:1')
+    vae = DisentangledVAE(f_dim=256, z_dim=32, step=256, factorised=True,device=device)
+    test_f = torch.rand(1,256, device=device)
+    test_f = test_f.unsqueeze(1).expand(1, 8, 256)
+    trainer = Trainer(vae, sprite, sprite_test, loader ,None, test_f,batch_size=25, epochs=500, learning_rate=0.0002, device=device)
+    trainer.load_checkpoint()
+    trainer.train_model()
