@@ -55,7 +55,7 @@ class DisentangledVAE(nn.Module):
                 h_t, c_t = prior_lstm(z_t-1, (h_t, c_t)) where h_t is the hidden state and c_t is the cell state
             Now the hidden state h_t is used to compute the mean and variance of z_t using an affine transform
                 z_mean, z_log_variance = affine_mean(h_t), affine_logvar(h_t)
-                z = reparameterize(z_mean, z_log_variance)
+        n, z_log_variance)
             The hidden state has dimension 512 and z has dimension 32
 
         CONVOLUTIONAL ENCODER:
@@ -168,7 +168,7 @@ class DisentangledVAE(nn.Module):
                 ConvUnit(step, step, 5, 2, 2), # 256,32,32 -> 256,16,16
                 ConvUnit(step, step, 5, 2, 2), # 256,16,16 -> 256,8,8
                 )
-        self.final_conv_size = in_size // 8
+        self.final_conv_size = in_size // 8 
         self.conv_fc = nn.Sequential(LinearUnit(step * (self.final_conv_size ** 2), self.conv_dim * 2),
                 LinearUnit(self.conv_dim * 2, self.conv_dim))
 
@@ -188,17 +188,17 @@ class DisentangledVAE(nn.Module):
                 nn.init.kaiming_normal_(m.weight)
 
     # If random sampling is true, reparametrization occurs else z_t is just set to the mean
-    def sample_z(self, batch_size, random_sampling=True):
+    def sample_z(self, batch_size, random_sampling=True, device=None):
         z_out = None # This will ultimately store all z_s in the format [batch_size, frames, z_dim]
         z_means = None
         z_logvars = None
 
         # All states are initially set to 0, especially z_0 = 0
-        z_t = torch.zeros(batch_size, self.z_dim, device=self.device)
-        z_mean_t = torch.zeros(batch_size, self.z_dim, device=self.device)
-        z_logvar_t = torch.zeros(batch_size, self.z_dim, device=self.device)
-        h_t = torch.zeros(batch_size, self.hidden_dim, device=self.device)
-        c_t = torch.zeros(batch_size, self.hidden_dim, device=self.device)
+        z_t = torch.zeros(batch_size, self.z_dim, device=device)
+        z_mean_t = torch.zeros(batch_size, self.z_dim, device=device)
+        z_logvar_t = torch.zeros(batch_size, self.z_dim, device=device)
+        h_t = torch.zeros(batch_size, self.hidden_dim, device=device)
+        c_t = torch.zeros(batch_size, self.hidden_dim, device=device)
 
         for _ in range(self.frames):
             h_t, c_t = self.z_prior_lstm(z_t, (h_t, c_t))
@@ -220,6 +220,7 @@ class DisentangledVAE(nn.Module):
 
 
     def encode_frames(self, x):
+        
         # The frames are unrolled into the batch dimension for batch processing such that x goes from
         # [batch_size, frames, channels, size, size] to [batch_size * frames, channels, size, size]
         x = x.view(-1, 3, self.in_size, self.in_size)
@@ -271,8 +272,8 @@ class DisentangledVAE(nn.Module):
         logvar = self.z_logvar(features)
         return mean, logvar, self.reparameterize(mean, logvar, self.training)
 
-    def forward(self, x):
-        z_mean_prior, z_logvar_prior, _ = self.sample_z(x.size(0), random_sampling=self.training)
+    def forward(self, x, device):
+        z_mean_prior, z_logvar_prior, _ = self.sample_z(x.size(0), random_sampling=self.training, device=device)
         conv_x = self.encode_frames(x)
         f_mean, f_logvar, f = self.encode_f(conv_x)
         z_mean, z_logvar, z = self.encode_z(conv_x, f)
