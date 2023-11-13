@@ -27,7 +27,7 @@ def loss_fn(original_seq,recon_seq,f_mean,f_logvar,z_post_mean,z_post_logvar, z_
     z_post_var = torch.exp(z_post_logvar)
     z_prior_var = torch.exp(z_prior_logvar)
     kld_z = 0.5 * torch.sum(z_prior_logvar - z_post_logvar + ((z_post_var + torch.pow(z_post_mean - z_prior_mean, 2)) / z_prior_var) - 1)
-    return (mse + kld_f + kld_z)/batch_size, kld_f/batch_size, kld_z/batch_size
+    return (mse + kld_f + kld_z)/batch_size, kld_f/batch_size, kld_z/batch_size, mse
 
 
 class Trainer(object):
